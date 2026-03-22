@@ -1,22 +1,25 @@
-import psutil
+import json
 import time
-import logging
+import utils
 
-# Loglama ayarları
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-def log_system_resources():
-    cpu_usage = psutil.cpu_percent(interval=1)
-    memory_usage = psutil.virtual_memory().percent
-    
-    logging.info(f"CPU Kullanımı: {cpu_usage}%")
-    logging.info(f"Bellek (RAM) Kullanımı: {memory_usage}%")
+# Konfigürasyon yükle
+with open('config.json', 'r') as f:
+    config = json.load(f)
 
 if __name__ == "__main__":
+    utils.setup_logging()
     print("Sistem İzleyici Başlatıldı (Çıkış için Ctrl+C)")
+    
     try:
         while True:
-            log_system_resources()
-            time.sleep(5)  # 5 saniyede bir kontrol et
+            cpu, memory = utils.get_resources()
+            
+            # Verileri CSV'ye logla
+            utils.log_to_csv(cpu, memory)
+            
+            # Eşikleri kontrol et ve uyar
+            utils.check_thresholds(cpu, memory, config['cpu_threshold'], config['memory_threshold'])
+            
+            time.sleep(config['monitor_interval'])
     except KeyboardInterrupt:
         print("\nİzleyici durduruldu.")
